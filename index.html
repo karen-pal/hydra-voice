@@ -1,0 +1,168 @@
+<!doctype html>
+	<head>
+		<style>
+			/* CSS comes here */
+
+           body {
+            font-family: arial;
+            margin: 0; /* Remove default body margin */
+            overflow: hidden; /* Hide overflow content */
+        }
+        #myCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Place canvas behind other elements */
+        }
+        #output {
+            background-color: rgba(249, 249, 249, 0.5); /* Half-opaque background */
+            padding: 10px;
+            width: 100%;
+            margin-top: 20px;
+            line-height: 30px;
+            position: absolute;
+            z-index: 1; /* Place output above canvas */
+        }
+        .floating-word {
+            display: inline-block;
+            padding: 5px;
+            background-color: rgba(255, 255, 255, 0.5); /* Half-opaque text background */
+            border-radius: 5px;
+            margin: 5px;
+        }
+
+		</style>
+		<title>reconocimiento</title>
+        <script src="https://unpkg.com/hydra-synth"></script>
+
+	</head>
+	<body>
+		<h2>reconocimiento</h2>
+        <div id="output" class="hide"></div>
+        <canvas id="myCanvas" width="100%" height="100%"></canvas>
+
+		<script>
+			/* JS comes here */
+            let sust_periferia = ["periferia", "silencio", "vacío", "sudamérica", "latino", "américa del sur", "sur"]
+            let sust_centro = ["centro", "hablar", "hegemonía"]
+            var hydra = new Hydra({
+                   canvas: document.getElementById("myCanvas"),
+                   detectAudio: false,
+                   enableStreamCapture: false,
+                 })
+            osc(10, 0.1, 0.8).rotate(0, 0.1).kaleid().color(-1, 1).out()
+            //setInterval(draw,100);
+		        // get output div reference
+		        var output = document.getElementById("output");
+		        // get action element reference
+		        var action = document.getElementById("action");
+                // new speech recognition object
+                var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
+                var recognition = new SpeechRecognition();
+                var i = 0;
+                recognition.lang = 'es-US'; //'en-US';
+                recognition.continuous = 'true'; //'en-US';
+            
+                // This runs when the speech recognition service starts
+                recognition.onstart = function() {
+                    i=0;
+                    //action.innerHTML = "<small>listening, please speak...</small>";
+                };
+                
+                recognition.onspeechend = function() {
+                    console.log("DEJE DE ESCUCHAR")
+                    //action.innerHTML = "<small>stopped listening, hope you are done...</small>";
+                    //recognition.stop();
+                }
+                recognition.onend = function() {
+                    console.log("terminó. no reiniciando")
+                      recognition.start();
+
+                }
+                let amount = 0; 
+                // This runs when the speech recognition service returns result
+
+                       // Request permission to access the microphone
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(function (stream) {
+                recognition.onstart = function() {
+                    //action.innerHTML = "<small>listening, please speak...</small>";
+                    i=0;
+                };
+                recognition.start();
+
+                // This runs when the speech recognition service returns result
+                recognition.onresult = function (event) {
+                    console.log(i);
+                    console.log(event.results);
+                    console.log(event.results[i]);
+                    var transcript = event.results[i][0].transcript;
+                    var confidence = event.results[i][0].confidence;
+                    if (transcript.includes("hablar")) {
+                        osc().out();
+                    }
+                    if (transcript.includes("centro")) {
+                        noise().out();
+                    }
+
+                    if (transcript.includes("silencio")) {
+                        solid(1, 1, 1).out();
+                    }
+                    if (transcript.includes("vacío")) {
+                        solid(0, 0, 0).out();
+                    }
+                    console.log(transcript);
+                    if (transcript.includes("mas") || transcript.includes("más")) {
+                        console.log("aca");
+                        amount = amount + .4;
+                        osc().out();
+                        document.body.style.background = "white";
+                    }
+                    setResolution(1920, 1080);
+                    output.innerHTML += "<b>Text:</b> " + transcript + "<br/> <b>Confidence:</b> " + confidence * 100 + "% </br>";
+                    output.classList.remove("hide");
+                    i++;
+                };
+            })
+            .catch(function (error) {
+                console.error('Error accessing the microphone:', error);
+            });
+
+              //  recognition.onresult = function(event) {
+              //      console.log(event.results);
+              //      var transcript = event.results[i][0].transcript;
+              //      var confidence = event.results[i][0].confidence;
+              //      if (transcript.includes("hablar")){
+              //          osc().out()
+              //      }
+              //      if (transcript.includes("centro")){
+              //          noise().out()
+              //      }
+
+              //      if (transcript.includes("silencio")){
+              //          solid(1,1,1).out()
+              //      }
+              //      if (transcript.includes("vacío")){
+              //          solid(0,0,0).out()
+              //      }
+              //      console.log(transcript);
+              //      if (transcript.includes("mas") || transcript.includes("más")){
+              //          console.log("aca")
+              //          amount = amount +.4;
+              //          osc().out()
+              //          document.body.style.background = "white";
+              //      }
+              //      setResolution(1920,1080)
+              //      output.innerHTML += "<b>Text:</b> " + transcript + "<br/> <b>Confidence:</b> " + confidence*100+"% </br>";
+              //      output.classList.remove("hide");
+              //      i++;
+              //  };
+              //
+              // recognition.start()
+
+
+		</script>
+	</body>
+</html>
